@@ -1,0 +1,13 @@
+Package: SCN
+Title: Secondary Coexpression Networks
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Juan A.",
+           family = "Sánchez",
+           role = c("aut", "cre"),
+           email = "jlaguna@um.es")
+Description: This package contains some usefull functions to create Gene Coexpression Networks (GCN) and Secondary Coexpression Networks (SCN).
+License: CC
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
