@@ -47,7 +47,6 @@ getExchangedGenes <- function(old.partition,new.partition){
 #' @param b numerical vector with gene expression for gene a
 #' @param signed is the network signed?
 #' @return The signed correlation if signed is TRUE
-#' @export
 corDistance = function(a,b,signed=TRUE){
   if(signed)
     return(0.5 * (1 + stats::cor(a,b)))
