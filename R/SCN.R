@@ -1,7 +1,5 @@
 library(WGCNA)
 library(flashClust)
-require(gProfileR)
-library(biomaRt)
 
 #' Best Coorrelated Module Selection
 #'
@@ -350,39 +348,6 @@ createGCN <- function( expr.data,
   outnet = applyKMeans( net=net, expr.data=expr.data, beta=beta, n.iterations, net.type = net.type)
 
   return(outnet)
-}
-
-hgnc_to_ensembl = function( hgnc ) {
-  mart = useEnsembl(biomart="ensembl", dataset = "hsapiens_gene_ensembl", GRCh=37)
-  x <- getBM(
-    attributes=c( 'hgnc_symbol', 'ensembl_gene_id'),
-    filters = 'hgnc_symbol',
-    values = hgnc,
-    mart = mart)
-
-  dict = x$ensembl_gene_id
-  names(dict) = x$hgnc_symbol
-  hgnc_list = dict[hgnc]
-  hgnc_list[is.na(hgnc_list) | hgnc_list == ""] = hgnc[is.na(hgnc_list) | hgnc_list == ""]
-  names(hgnc_list) = hgnc
-  return(hgnc_list)
-}
-
-ensembl_to_hgnc = function( ensembl ) {
-  mart = useEnsembl(biomart="ensembl", dataset = "hsapiens_gene_ensembl", GRCh=37)
-  x <- getBM(
-    attributes=c( 'hgnc_symbol', 'ensembl_gene_id'),
-    filters = 'ensembl_gene_id',
-    values = ensembl,
-    mart = mart)
-
-  dict = x$hgnc_symbol
-  names(dict) = x$ensembl_gene_id
-
-  ensembl_list = dict[ensembl]
-  ensembl_list[is.na(ensembl_list) | ensembl_list == ""] = ensembl[is.na(ensembl_list) | ensembl_list == ""]
-  names(ensembl_list) = ensembl
-  return(ensembl_list)
 }
 
 getModulesEnrichment = function(net,
