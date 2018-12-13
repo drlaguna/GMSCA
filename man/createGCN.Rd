@@ -34,6 +34,8 @@ The network, post-processed with a k-means heuristic. The object returned has th
   \item MEs is a matrix with a column for each module and a row for each sample. It contains the module eigengenes.
   \item beta The soft threshold parameter used to create the adjacency matrix in WGCNA.
   \item type it is used in the same sense as WGCNA.
+  \item iterations The number of iterations that the algorithm actually made.
+  \item exchanged.genes The number of exchanged genes in the last iteration of the algorithm.
 }#'
 }
 \description{

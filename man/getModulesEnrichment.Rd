@@ -9,8 +9,7 @@ getModulesEnrichment(net, markers.path = ".", return.processed = F)
 \arguments{
 \item{net}{A GCN created with \code{\link{createGCN}}. It can be an R object or the full path of a file
 containing it. If a filename is provided this function will first look for a file with the same name but
-ending in ".enrichment.csv". If the file exists the function will return its content.
-This function determine the module enrichment of a GCN using WGCNA::userListEnrichment}
+ending in ".enrichment.csv". If the file exists the function will return its content.}
 
 \item{markers.path}{Folder containing user-defined lists of genes to be used as marker genes to determine
 modules enrichment. This is done using WGCNA::userListEnrichment function so they must be in a compatible
@@ -20,9 +19,9 @@ format. Gene IDs must be expresed using the same format as in the network specif
 values by the highest value obtained. When False the function returns the p-values.}
 }
 \value{
-a matrix with a column for each module in the network and a row for each cell type. Values in the matrix
-reflects the p-value of the test made to determine if the module is enriched by the cell type or not.
+a matrix with a column for each module in the network and a row for each enrichment type. Values in the matrix
+reflects the p-value resulting from the test made to determine if the module is enriched or not.
 }
 \description{
-Modules enrichment
+This function determine the module enrichment of a GCN using WGCNA::userListEnrichment
 }
