@@ -31,7 +31,7 @@ A 1.000000e+00   1    1 5.647068e-30 1.000000e+00     1     1         1     1
 B 1.000000e+00   1    1 1.000000e+00 4.206175e-25     1     1         1     1
 C 6.402609e-20   1    1 1.000000e+00 1.000000e+00     1     1         1     1
 
-> getModulesEnrichment( primary.net )
+> getModulesEnrichment( secondary.net )
 
           blue green red yellow brown turquoise
 A 1.000000e+00     1   1      1     1         1

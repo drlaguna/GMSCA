@@ -8,26 +8,22 @@ enrichmentEvolution(primary.net, secondary.net, genes = NULL,
   markers.path = ".")
 }
 \arguments{
+\item{primary.net}{A GCN created with \code{\link{createGCN}}}
+
+\item{secondary.net}{A GCN created with \code{\link{createGCN}}}
+
+\item{genes}{The list of gene's IDs}
+
 \item{markers.path}{Folder containing user-defined lists of genes to be used as marker genes to determine
 modules' enrichment. This is done using WGCNA::userListEnrichment function, so they must be in a compatible
-format. Gene IDs must be expresed using the same format as in the expression data specified in the first parameter.}
-
-\item{expr.data}{The expression data to be cleaned. It can be a full path file name or a data frame with
-genes in columns and samples in rows.}
-
-\item{target.enrichment}{A string with the kind of enrichment that should be removed. This name (or list of
-names) should be one from the list of enrichment marker genes' files provided.}
-
-\item{net}{A GCN created with \code{\link{createGCN}} from the same expression data. It can be a full path
-of a file containing it or an R object. This network reflects the primary signal and it is used to determine
-what modules need to be cleaned in order to find the secondary signal. If no network is provided it will
-be created. Therefore, providing one is also a way to reduce the time spent by this function.}
+format. Gene IDs must be expresed using the same format as in the networks.}
 }
 \value{
-the expression data filtered that, hopefully, show the secondary role of some genes in the same format
-of the input expression data.
+A data frame showing a row for each gene and the module and enrichment of that gene in both networks.
+When the module is not enriched a - is shonw. When is enriched by more than a type, they are shown as a list.
 }
 \description{
-This function generates a new expression profile by removing the primary signal of the groups of genes whose primary
-enrichment is indicated in the following parameter.
+This function analyces two networks determining the enrichment of each gene in each network. Both
+networks must be made from the same set of genes. The list of genes studied can be provided or all of them
+will be analyzed.
 }
