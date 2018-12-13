@@ -57,8 +57,9 @@ In this case we can see that the expression profile processed to remove the effe
 
 blue.genes has the name of the genes included in the blue module of the second network and using enrichmentEvolution we obtain a data frame with all the information we need. Thus, to see just the genes that has "C" as secondary cell-type we do the following:
 
-changes[changes$primary.enrichment != changes$secondary.enrichment, ]
-          gene primary.module primary.enrichment secondary.module secondary.enrichment
+> changes[changes$primary.enrichment != changes$secondary.enrichment, ]
+
+                 gene primary.module primary.enrichment secondary.module secondary.enrichment
           6    GEN_20          black                  -             blue                    C
           28  GEN_150          black                  -             blue                    C
           29  GEN_162          black                  -             blue                    C
