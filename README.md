@@ -49,7 +49,7 @@ as it can be seen the second network shows that just cell-type "C" remains as en
      blue     brown     green       red turquoise    yellow 
       186       158       130       138       261       127 
 
-While in the original expression profile we found 160 genes in the blue module enriched by cell-type "C", in the expression profile processed to remove the effect of cell-types "A" and "B" we can see 26 = 180-160 more genes enriched by cell-type "C". Let's see now were they come from, i.e., what cell-type had those genes in the first network.
+In this case we can see that the expression profile processed to remove the effect of cell-types "A" and "B" has more "C" enriched genes than the original expression profiles. Concretelly, 180-160 = 26 more genes enriched by cell-type "C". Let's see now where they come from, i.e., what cell-type had those genes in the first network.
 
 > blue.genes = names(secondary.net$moduleColors[secondary.net$moduleColors == "blue"])
 

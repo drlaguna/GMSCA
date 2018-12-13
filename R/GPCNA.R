@@ -545,9 +545,8 @@ enrichmentEvolution = function( primary.net, secondary.net, genes = NULL, marker
                       primary.module = as.character(primary.net$moduleColors[genes]), primary.enrichment = as.character(primary.em[primary.net$moduleColors[genes]]),
                       secondary.module = as.character(secondary.net$moduleColors[genes]), secondary.enrichment = as.character(secondary.em[secondary.net$moduleColors[genes]]),
                       stringsAsFactors=F )
-  tabla$primary.enrichment[is.na(tabla$primary.enrichment)] = unlist(apply(primary.enrichment.by.module[,tabla$primary.module[is.na(tabla$primary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(primary.enrichment.names[which(x <= 0.05)],"(",x[x<=0.05],")", collapse=", ")) }))
-  tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = unlist(apply(secondary.enrichment.by.module[,tabla$secondary.module[is.na(tabla$secondary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(secondary.enrichment.names[which(x <= 0.05)],"(",x[x<=0.05],")", collapse=", ")) }))
-  #tabla$primary.enrichment[is.na(tabla$primary.enrichment)] = "-"
+  tabla$primary.enrichment[is.na(tabla$primary.enrichment)] = unlist(apply(primary.enrichment.by.module[,tabla$primary.module[is.na(tabla$primary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(primary.enrichment.names[which(x <= 0.05)], collapse=", ")) }))
+  tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = unlist(apply(secondary.enrichment.by.module[,tabla$secondary.module[is.na(tabla$secondary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(secondary.enrichment.names[which(x <= 0.05)], collapse=", ")) }))
   tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = "-"
   return(tabla)
 }
