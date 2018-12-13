@@ -1,13 +1,13 @@
-Package: SCN
-Title: Secondary Coexpression Networks
+Package: GPCNA
+Title: Gene Pleiotropy Co-expression Networks Analysis
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Juan A.",
            family = "Sánchez",
            role = c("aut", "cre"),
            email = "jlaguna@um.es")
-Description: This package contains some usefull functions to create Gene Coexpression Networks (GCN) and Secondary Coexpression Networks (SCN).
-License: CC
+Description: This package contains some useful functions to create Gene Co-expression Networks (GCN) and to analyze gene pleiotropy. It is done by filtering gene expression profiles to remove the most evident relationship among certain groups of genes and studying the new relationships established wit Co-expression networks.
+License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1

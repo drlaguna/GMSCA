@@ -1,1 +1,1 @@
-# Secondary Coexpression Networks (SCN)
+# GPCNA: Gene Pleiotropy Co-expression Networks Analysis
