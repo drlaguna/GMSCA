@@ -468,8 +468,10 @@ removePrimaryEffect = function( expr.data, target.enrichment, net = NULL, marker
   enrichment.filename = paste0( net.filename, ".enrichment.csv")
   if ( file.exists( enrichment.filename ) ) {
     enrichment.by.module = read.csv( enrichment.filename, stringsAsFactors=F)
-    rownames(enrichment.by.module) = enrichment.by.module[,1]
-    enrichment.by.module = enrichment.by.module[,-1]
+    if ( colnames(enrichment.by.module)[1] == "X" ) {
+      rownames(enrichment.by.module) = enrichment.by.module[,1]
+      enrichment.by.module = enrichment.by.module[,-1]
+    }
   } else {
     if ( is.null( markers.path ) ) markers.path = dirname( net.filename )
     enrichment.by.module = getModulesEnrichment( net = net, markers.path = markers.path)
