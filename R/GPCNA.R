@@ -353,7 +353,7 @@ createGCN <- function( expr.data,
   net$type = net.type
   names(net$moduleColors) <- gene.names
   net$geneTree <- geneTree
-  cat( "Computing Module Membership\n" )
+  print( "Computing Module Membership" )
   outnet = applyKMeans( net=net, expr.data=expr.data, beta=beta, n.iterations, net.type = net.type)
   gene.names = names(outnet$moduleColors)
   mm = NULL
