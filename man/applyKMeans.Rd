@@ -8,12 +8,7 @@ applyKMeans(net, expr.data, beta = 6, n.iterations = 20,
   net.type = "signed")
 }
 \arguments{
-\item{net}{must be a RDS object storing the network. Networks can be created using \code{\link{createGCN}} function.
-We expect a list with objects "moduleColors" and "MEs". The "moduleColors" element is a named vector
-whose elements are colors as assigned by WGCNA. The names() function should return the gene names for
-each vector's element. The "MEs" is a matrix with a column for each module and a row for each sample.
-It contains the module eigengenes. Note that the order of genes in moduleColors is the same as they
-appear in columns in expr.data parameter's object.}
+\item{net}{must be a RDS object storing the network. Networks can be created using \code{\link{createGCN}} function.}
 
 \item{expr.data}{can be a full path file name or a data frame with genes in columns and samples in
 rows, giving the expression data used to construct the WGCNA network. The function expects genes in the

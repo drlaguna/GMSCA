@@ -2,7 +2,6 @@ library(WGCNA)
 library(flashClust)
 library(dynamicTreeCut)
 
-
 #' Best Coorrelated Module Selection
 #'
 #' The function selects the best module for a gene on the basis of the highest
@@ -59,11 +58,6 @@ corDistance = function(a,b,signed=TRUE){
 #' modifies the module color assignment by using k-means heuristic.
 #' The description of the parameters show how the function works.
 #' @param net must be a RDS object storing the network. Networks can be created using \code{\link{createGCN}} function.
-#' We expect a list with objects "moduleColors" and "MEs". The "moduleColors" element is a named vector
-#' whose elements are colors as assigned by WGCNA. The names() function should return the gene names for
-#' each vector's element. The "MEs" is a matrix with a column for each module and a row for each sample.
-#' It contains the module eigengenes. Note that the order of genes in moduleColors is the same as they
-#' appear in columns in expr.data parameter's object.
 #' @param expr.data can be a full path file name or a data frame with genes in columns and samples in
 #' rows, giving the expression data used to construct the WGCNA network. The function expects genes in the
 #' column order to correspond to the order of nameColors of net.file param.
@@ -205,6 +199,7 @@ applyKMeans <- function(net,
 #'   is the same as they appear in columns in expr.data parameter's object.
 #'   \item moduleLabels contains a list with the gene names in the same order as in moduleColors.
 #'   \item MEs is a matrix with a column for each module and a row for each sample. It contains the module eigengenes.
+#'   \item MM contains a list with the module membership of each gene in the same order as in moduleColors.
 #'   \item beta The soft threshold parameter used to create the adjacency matrix in WGCNA.
 #'   \item type it is used in the same sense as WGCNA.
 #'   \item iterations The number of iterations that the algorithm actually made.
@@ -248,7 +243,7 @@ createGCN <- function( expr.data,
   }
 
   if(beta == -Inf & is.na(b.study$powerEstimate)){
-    stop( paste0("There is something wrong, min beta is ", beta, " and suggested is", b.study$powerEstimate,"\n") )
+    stop("There is something wrong, min beta is ", beta, " and suggested is", b.study$powerEstimate,"\n")
   }
 
   if(!is.na(b.study$powerEstimate)){
@@ -358,9 +353,15 @@ createGCN <- function( expr.data,
   net$type = net.type
   names(net$moduleColors) <- gene.names
   net$geneTree <- geneTree
-
+  cat( "Computing Module Membership\n" )
   outnet = applyKMeans( net=net, expr.data=expr.data, beta=beta, n.iterations, net.type = net.type)
-
+  gene.names = names(outnet$moduleColors)
+  mm = NULL
+  for ( gene in gene.names ) {
+    module = outnet$moduleColors[ gene.names == gene ]
+    mm[[gene]] = cor(outnet$MEs[paste0("ME",module)], expr.data[,gene])
+  }
+  outnet$MM = mm;
   return(outnet)
 }
 
@@ -387,10 +388,6 @@ getModulesEnrichment = function(net,
     enrichment.filename = paste0( net, ".enrichment.csv")
     if ( file.exists( enrichment.filename ) ) {
       enrichment.by.module = read.csv( enrichment.filename, stringsAsFactors=F)
-      if ( colnames(enrichment.by.module)[1] == "X" ) {
-        rownames(enrichment.by.module) = enrichment.by.module[,1]
-        enrichment.by.module = enrichment.by.module[,-1]
-      }
       return (enrichment.by.module)
     }
     net = readRDS(net)
@@ -434,10 +431,10 @@ getModulesEnrichment = function(net,
   return (ctypedata)
 }
 
-#' Cleaning the primary enrichment signal
+#' Cleaning the primary signal
 #'
-#' This function generates a new expression profile by removing the primary signal of the groups of genes whose primary
-#' enrichment is indicated in the following parameter.
+#' This function remove the primary signal of the groups of genes whose primary enrichment is indicated in
+#' the following parameter.
 #' @param expr.data The expression data to be cleaned. It can be a full path file name or a data frame with
 #' genes in columns and samples in rows.
 #' @param target.enrichment A string with the kind of enrichment that should be removed. This name (or list of
@@ -465,26 +462,17 @@ removePrimaryEffect = function( expr.data, target.enrichment, net = NULL, marker
       net = readRDS( net.filename )
     }
   }
-  enrichment.filename = paste0( net.filename, ".enrichment.csv")
+  enrichment.filename = paste0( net.filename, ".celltype.csv")
   if ( file.exists( enrichment.filename ) ) {
     enrichment.by.module = read.csv( enrichment.filename, stringsAsFactors=F)
-    if ( colnames(enrichment.by.module)[1] == "X" ) {
-      rownames(enrichment.by.module) = enrichment.by.module[,1]
-      enrichment.by.module = enrichment.by.module[,-1]
-    }
   } else {
     if ( is.null( markers.path ) ) markers.path = dirname( net.filename )
     enrichment.by.module = getModulesEnrichment( net = net, markers.path = markers.path)
   }
-  enrichment.names = rownames(enrichment.by.module)
-  enrichment.by.module = enrichment.by.module[,][,as.vector(apply(enrichment.by.module[,], 2, FUN = function(x) { sum( x <= 0.05)} ) == 1)]
+  enrichment.names = enrichment.by.module[,1]
+  enrichment.by.module = enrichment.by.module[,-1][,as.vector(apply(enrichment.by.module[,-1], 2, FUN = function(x) { sum( x <= 0.05)} ) == 1)]
   enriched.modules = apply( enrichment.by.module, 2, FUN = function(x) { enrichment.names[which(x <= 0.05)] } )
-
-  if ( is.null(target.enrichment) | length(target.enrichment) == 0 ) {
-    stop( "target.enrichment must be a character list containing one or mor enrichment names" )
-    return (NULL)
-  }
-  modules.to.clean = enriched.modules[ enriched.modules %in% target.enrichment]
+  modules.to.clean = enriched.modules[ enriched.modules != target.enrichment]
   cleaned.data = expr.data[,!(net$moduleColors %in% names(modules.to.clean))]
 
   for ( module in names(modules.to.clean) ) {
@@ -494,25 +482,14 @@ removePrimaryEffect = function( expr.data, target.enrichment, net = NULL, marker
     res = apply( expr, 2, function(y) { lm( y ~ ., data=ee )$residuals })
     cleaned.data = cbind(cleaned.data, res)
   }
-  return ( cleaned.data )
+  net$type = "signed"
+  if ( !is.null(net$type)) net.type = net$type
+  cleaned.net = createGCN( expr.data = cleaned.data, net.type = net.type )
+  return (list( expr.data = cleaned.data, gcn = cleaned.net ))
 }
 
 
-#' Resume changes in enrichment for each gene
-#'
-#' This function analyces two networks determining the enrichment of each gene in each network. Both
-#' networks must be made from the same set of genes. The list of genes studied can be provided or all of them
-#' will be analyzed.
-#' @param primary.net A GCN created with \code{\link{createGCN}}
-#' @param secondary.net A GCN created with \code{\link{createGCN}}
-#' @param genes The list of gene's IDs
-#' @param markers.path Folder containing user-defined lists of genes to be used as marker genes to determine
-#' modules' enrichment. This is done using WGCNA::userListEnrichment function, so they must be in a compatible
-#' format. Gene IDs must be expresed using the same format as in the networks.
-#' @return A data frame showing a row for each gene and the module and enrichment of that gene in both networks.
-#' When the module is not enriched a - is shonw. When is enriched by more than a type, they are shown as a list.
-#' @export
-enrichmentEvolution = function( primary.net, secondary.net, genes = NULL, markers.path = "." ) {
+test = function( primary.net, secondary.net, markers.path ) {
   primary.net.filename = "."
   if ( typeof(primary.net) == "character" ) {
     primary.net.filename = primary.net
@@ -526,29 +503,15 @@ enrichmentEvolution = function( primary.net, secondary.net, genes = NULL, marker
   primary.enrichment.by.module = getModulesEnrichment( net = primary.net, markers.path = markers.path)
   secondary.enrichment.by.module = getModulesEnrichment( net = secondary.net, markers.path = markers.path)
 
-  # Nos quedamos por un lado con los nombres de las columnas ( tipos de celula )
-  primary.enrichment.names = rownames(primary.enrichment.by.module)
+    # Nos quedamos por un lado con los nombres de las columnas ( tipos de celula )
+  enrichment.names = enrichment.by.module[,1]
   # Nos quedamos sólo con las columnas  que tienen modulos significativa y exclusivamente enriquecidos por un único tipo de célula
-  primary.em = primary.enrichment.by.module[,as.vector(apply(primary.enrichment.by.module, 2, FUN = function(x) { sum( x <= 0.05)} ) == 1), drop = F]
+  em = enrichment.by.module[,-1][,as.vector(apply(enrichment.by.module[,-1], 2, FUN = function(x) { sum( x <= 0.05)} ) == 1)]
   # la lista de módulos etiquetada por el tipo de célula en el que están significativa y exclusivamente enriquecidos
-  primary.em = apply( primary.em, 2, FUN = function(x) { primary.enrichment.names[which(x <= 0.05)] } )
+  em = apply( em, 2, FUN = function(x) { enrichment.names[which(x <= 0.05)] } )
 
-  # Nos quedamos por un lado con los nombres de las columnas ( tipos de celula )
-  secondary.enrichment.names = rownames(secondary.enrichment.by.module)
-  # Nos quedamos sólo con las columnas  que tienen modulos significativa y exclusivamente enriquecidos por un único tipo de célula
-  secondary.em = secondary.enrichment.by.module[,as.vector(apply(secondary.enrichment.by.module, 2, FUN = function(x) { sum( x <= 0.05)} ) == 1), drop=F]
-  # la lista de módulos etiquetada por el tipo de célula en el que están significativa y exclusivamente enriquecidos
-  secondary.em = apply( secondary.em, 2, FUN = function(x) { secondary.enrichment.names[which(x <= 0.05)] } )
-
-  if ( is.null(genes) ) {
-    genes = names(primary.net$moduleColors)
-  }
-  tabla = data.frame( gene = genes,
-                      primary.module = as.character(primary.net$moduleColors[genes]), primary.enrichment = as.character(primary.em[primary.net$moduleColors[genes]]),
-                      secondary.module = as.character(secondary.net$moduleColors[genes]), secondary.enrichment = as.character(secondary.em[secondary.net$moduleColors[genes]]),
-                      stringsAsFactors=F )
-  tabla$primary.enrichment[is.na(tabla$primary.enrichment)] = unlist(apply(primary.enrichment.by.module[,tabla$primary.module[is.na(tabla$primary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(primary.enrichment.names[which(x <= 0.05)], collapse=", ")) }))
-  tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = unlist(apply(secondary.enrichment.by.module[,tabla$secondary.module[is.na(tabla$secondary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(secondary.enrichment.names[which(x <= 0.05)], collapse=", ")) }))
-  tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = "-"
+  tabla = data.frame( gene = genes, module = as.character(net$moduleColors[genes]), celltype = as.character(em[net$moduleColors[genes]]), stringsAsFactors=F )
+  tabla$celltype[is.na(tabla$celltype)] = unlist(apply(enrichment.by.module[,tabla$module[is.na(tabla$celltype)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(enrichment.names[which(x <= 0.05)],"(",x[x<=0.05],")", collapse=", ")) }))
   return(tabla)
 }
+

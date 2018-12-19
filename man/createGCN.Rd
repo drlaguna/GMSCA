@@ -32,6 +32,7 @@ The network, post-processed with a k-means heuristic. The object returned has th
   is the same as they appear in columns in expr.data parameter's object.
   \item moduleLabels contains a list with the gene names in the same order as in moduleColors.
   \item MEs is a matrix with a column for each module and a row for each sample. It contains the module eigengenes.
+  \item MM contains a list with the module membership of each gene in the same order as in moduleColors.
   \item beta The soft threshold parameter used to create the adjacency matrix in WGCNA.
   \item type it is used in the same sense as WGCNA.
   \item iterations The number of iterations that the algorithm actually made.
