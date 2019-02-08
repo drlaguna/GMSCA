@@ -356,6 +356,9 @@ createGCN <- function( expr.data,
   print( "Computing Module Membership" )
   outnet = applyKMeans( net=net, expr.data=expr.data, beta=beta, n.iterations, net.type = net.type)
   gene.names = names(outnet$moduleColors)
+  if ( sum(duplicated(gene.names)) > 0 ) {
+    stop("There is some gene names duplicated, please remove this befor trying to create a Coexpression Network\n")
+  }
   mm = NULL
   for ( gene in gene.names ) {
     module = outnet$moduleColors[ gene.names == gene ]
@@ -489,7 +492,16 @@ removePrimaryEffect = function( expr.data, target.enrichment, net = NULL, marker
 }
 
 
-test = function( primary.net, secondary.net, markers.path ) {
+#' Showing changes in enrichment between networks
+#'
+#' This function compares the enrichment of a set of genes in two networks. Usually, the primary and the secondary network.
+#' @param primary.net A GCN created with \code{\link{createGCN}}. It can be a full path of a file containing it or an R object.
+#' @param secondary.net A GCN created with \code{\link{createGCN}} from a expression data containing the same genes as the
+#' previous network. It can be a full path of a file containing it or an R object.
+#' @param genes Subset of genes to be compared. The default value is null and that means all genes will be used in the comparison.
+#' @return A dataframe with a row for each gene and the module and enrichment in both networks.
+#' @export
+enrichmenEvolution = function( primary.net, secondary.net, genes = NULL ) {
   primary.net.filename = "."
   if ( typeof(primary.net) == "character" ) {
     primary.net.filename = primary.net
@@ -500,6 +512,10 @@ test = function( primary.net, secondary.net, markers.path ) {
     secondary.net.filename = secondary.net
     secondary.net = readRDS(secondary.net)
   }
+  if ( is.null( genes ) ) {
+    genes = names( primary.net$moduleColors );
+  }
+
   primary.enrichment.by.module = getModulesEnrichment( net = primary.net, markers.path = markers.path)
   secondary.enrichment.by.module = getModulesEnrichment( net = secondary.net, markers.path = markers.path)
 
