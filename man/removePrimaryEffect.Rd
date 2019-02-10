@@ -2,7 +2,7 @@
 % Please edit documentation in R/GPCNA.R
 \name{removePrimaryEffect}
 \alias{removePrimaryEffect}
-\title{Cleaning the primary signal}
+\title{Cleaning the primary enrichment signal}
 \usage{
 removePrimaryEffect(expr.data, target.enrichment, net = NULL,
   markers.path = NULL)
@@ -28,6 +28,6 @@ the expression data filtered that, hopefully, show the secondary role of some ge
 of the input expression data.
 }
 \description{
-This function remove the primary signal of the groups of genes whose primary enrichment is indicated in
-the following parameter.
+This function generates a new expression profile by removing the primary signal of the groups of genes whose primary
+enrichment is indicated in the following parameter.
 }
