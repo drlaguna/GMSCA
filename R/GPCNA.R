@@ -1,6 +1,8 @@
 library(WGCNA)
 library(flashClust)
 library(dynamicTreeCut)
+library(stats)
+library(utils)
 
 #' Best Coorrelated Module Selection
 #'
@@ -383,7 +385,7 @@ createGCN <- function( expr.data,
 #' @return a matrix with a column for each module in the network and a row for each enrichment type. Values in the matrix
 #' reflects the p-value resulting from the test made to determine if the module is enriched or not.
 #' @export
-getModulesEnrichment = function(net,
+getModulesEnrichment <- function(net,
                                 markers.path = ".",
                                 return.processed=F){
 
@@ -456,7 +458,7 @@ getModulesEnrichment = function(net,
 #' @return  the expression data filtered that, hopefully, show the secondary role of some genes in the same format
 #' of the input expression data.
 #' @export
-removePrimaryEffect = function( expr.data, target.enrichment, net = NULL, markers.path = NULL ) {
+removePrimaryEffect <- function( expr.data, target.enrichment, net = NULL, markers.path = NULL ) {
   if ( typeof(expr.data) == "character" ) {
     expr.data = readRDS(expr.data)
   }
@@ -516,7 +518,7 @@ removePrimaryEffect = function( expr.data, target.enrichment, net = NULL, marker
 #' @return A data frame showing a row for each gene and the module and enrichment of that gene in both networks.
 #' When the module is not enriched a - is shonw. When is enriched by more than a type, they are shown as a list.
 #' @export
-enrichmentEvolution = function( primary.net, secondary.net, genes = NULL, markers.path = "." ) {
+enrichmentEvolution <- function( primary.net, secondary.net, genes = NULL, markers.path = "." ) {
   primary.net.filename = "."
   if ( typeof(primary.net) == "character" ) {
     primary.net.filename = primary.net
