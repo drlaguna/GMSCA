@@ -12,7 +12,7 @@ enrichmentEvolution(primary.net, secondary.net, genes = NULL,
 
 \item{secondary.net}{A GCN created with \code{\link{createGCN}}}
 
-\item{genes}{The list of gene's IDs}
+\item{genes}{The list of gene's IDs to be used}
 
 \item{markers.path}{Folder containing user-defined lists of genes to be used as marker genes to determine
 modules' enrichment. This is done using WGCNA::userListEnrichment function, so they must be in a compatible

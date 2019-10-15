@@ -28,6 +28,6 @@ the expression data filtered that, hopefully, show the secondary role of some ge
 of the input expression data.
 }
 \description{
-This function generates a new expression profile by removing the primary signal of the groups of genes whose primary
+This function generates a new expression profile by removing the primary signal of the groups of genes whose only and primary
 enrichment is indicated in the following parameter.
 }

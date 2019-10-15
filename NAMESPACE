@@ -2,8 +2,10 @@
 
 export(createGCN)
 export(enrichmentEvolution)
+export(getMarkerGenes)
 export(getModulesEnrichment)
 export(removePrimaryEffect)
+export(varianceEvolution)
 import(WGCNA)
 import(dynamicTreeCut)
 import(flashClust)

@@ -406,6 +406,9 @@ getModulesEnrichment <- function(net,
   files = list.files(path=markers.path,full.names = T)
   files = files[grep(pattern=".txt$",files)]
   markernames = gsub(".txt","",basename(files))
+  if ( length(markernames) == 0 ) {
+    stop( paste0( "There are no txt files to be used as marker genes in path ", markers.path) )
+  }
 
   ctypes = markernames
   ctypedata = matrix(ncol=length(modules),nrow=length(files))
@@ -442,7 +445,7 @@ getModulesEnrichment <- function(net,
 
 #' Cleaning the primary enrichment signal
 #'
-#' This function generates a new expression profile by removing the primary signal of the groups of genes whose primary
+#' This function generates a new expression profile by removing the primary signal of the groups of genes whose only and primary
 #' enrichment is indicated in the following parameter.
 #' @param expr.data The expression data to be cleaned. It can be a full path file name or a data frame with
 #' genes in columns and samples in rows.
@@ -511,7 +514,7 @@ removePrimaryEffect <- function( expr.data, target.enrichment, net = NULL, marke
 #' will be analyzed.
 #' @param primary.net A GCN created with \code{\link{createGCN}}
 #' @param secondary.net A GCN created with \code{\link{createGCN}}
-#' @param genes The list of gene's IDs
+#' @param genes The list of gene's IDs to be used
 #' @param markers.path Folder containing user-defined lists of genes to be used as marker genes to determine
 #' modules' enrichment. This is done using WGCNA::userListEnrichment function, so they must be in a compatible
 #' format. Gene IDs must be expresed using the same format as in the networks.
@@ -550,11 +553,69 @@ enrichmentEvolution <- function( primary.net, secondary.net, genes = NULL, marke
     genes = names(primary.net$moduleColors)
   }
   tabla = data.frame( gene = genes,
-                      primary.module = as.character(primary.net$moduleColors[genes]), primary.enrichment = as.character(primary.em[primary.net$moduleColors[genes]]),
-                      secondary.module = as.character(secondary.net$moduleColors[genes]), secondary.enrichment = as.character(secondary.em[secondary.net$moduleColors[genes]]),
-                      stringsAsFactors=F )
+                      primary.module = as.character(primary.net$moduleColors[genes]), 
+                      primary.enrichment = as.character(primary.em[primary.net$moduleColors[genes]]),
+                      secondary.module = as.character(secondary.net$moduleColors[genes]), 
+                      secondary.enrichment = as.character(secondary.em[secondary.net$moduleColors[genes]]),
+                      stringsAsFactors=F,
+                      row.names=NULL )
   tabla$primary.enrichment[is.na(tabla$primary.enrichment)] = unlist(apply(primary.enrichment.by.module[,tabla$primary.module[is.na(tabla$primary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(primary.enrichment.names[which(x <= 0.05)], collapse=", ")) }))
   tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = unlist(apply(secondary.enrichment.by.module[,tabla$secondary.module[is.na(tabla$secondary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(secondary.enrichment.names[which(x <= 0.05)], collapse=", ")) }))
   tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = "-"
   return(tabla)
 }
+
+#' Resume changes in the variance of genes after removing some enrichment signal
+#'
+#' This function compare the variance of expression data before and after removing some enrichment signal using
+#' \code{\link{removePrimaryEffect}}.
+#' @param original.expr.data The original expression data. It can be a full path file name or a data frame with
+#' genes in columns and samples in rows.
+#' @param cleaned.expr.data The expression data obtained by removing some enrichment signal with \code{\link{removePrimaryEffect}}.
+#' @param genes The list of gene's IDs to be used
+#' @return  A data frame showing a row for each gene and the variance of that gene in both data sets.
+#' @export
+varianceEvolution <- function( original.expr.data, cleaned.expr.data, genes = NULL ) {
+  if ( typeof(original.expr.data) == "character" ) {
+    original.expr.data = readRDS( original.expr.data )
+  }
+  if ( typeof(cleaned.expr.data) == "character" ) {
+    cleaned.expr.data = readRDS( cleaned.expr.data )
+  }
+
+  original.var = apply(original.data, 2, var)
+  cleaned.var = apply(cleaned.data, 2, var)
+
+  if ( is.null(genes) ) {
+    genes = colnames( original.expr.data)
+  }
+  return (data.frame( gene = genes,
+                      original.variance = original.var[genes],
+                      cleaned.variance = cleaned.var[genes],
+                      stringsAsFactors = F,
+                      row.names=NULL ) )
+}
+
+#' Resume Read marker gene files and return a list of marker genes
+#'
+#' This function read marker gene files and return a list of marker genes.
+#' @param markers.path Folder containing user-defined lists of genes to be used as marker genes to determine
+#' modules' enrichment. This is done using WGCNA::userListEnrichment function, so they must be in a compatible
+#' format. Gene IDs must be expresed using the same format as in the expression data specified in the first parameter.
+#' @return  A list of marker gene lists, one for each file read.
+#' @export
+getMarkerGenes <- function( markers.path = "." ) {
+  files = list.files(path=markers.path, full.names = T)
+  files = files[grep(pattern=".txt$", files)]
+  markernames = gsub(".txt","", basename(files))
+  if ( length(markernames) == 0 ) {
+    stop( paste0( "There are no txt files to be used as marker genes in path ", markers.path) )
+  }
+
+  markers = list()
+  for ( marker in markernames ) {
+    markers[[marker]] = read.csv( paste0( markers.path, "/", marker, ".txt" ), header=T, stringsAsFactors = F)[,1]
+  }
+  return(markers)
+}
+
