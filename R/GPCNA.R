@@ -583,8 +583,8 @@ varianceEvolution <- function( original.expr.data, cleaned.expr.data, genes = NU
     cleaned.expr.data = readRDS( cleaned.expr.data )
   }
 
-  original.var = apply(original.data, 2, var)
-  cleaned.var = apply(cleaned.data, 2, var)
+  original.var = apply(original.expr.data, 2, var)
+  cleaned.var = apply(cleaned.expr.data, 2, var)
 
   if ( is.null(genes) ) {
     genes = colnames( original.expr.data)
