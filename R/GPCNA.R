@@ -455,13 +455,14 @@ getModulesEnrichment <- function(net,
 #' of a file containing it or an R object. This network reflects the primary signal and it is used to determine
 #' what modules need to be cleaned in order to find the secondary signal. If no network is provided it will
 #' be created. Therefore, providing one is also a way to reduce the time spent by this function.
+#' @param significanceThreshold Max enrichment p-value for a module to be considred as significantly enriched.
 #' @param markers.path Folder containing user-defined lists of genes to be used as marker genes to determine
 #' modules' enrichment. This is done using WGCNA::userListEnrichment function, so they must be in a compatible
 #' format. Gene IDs must be expresed using the same format as in the expression data specified in the first parameter.
 #' @return  the expression data filtered that, hopefully, show the secondary role of some genes in the same format
 #' of the input expression data.
 #' @export
-removePrimaryEffect <- function( expr.data, target.enrichment, net = NULL, markers.path = NULL ) {
+removePrimaryEffect <- function( expr.data, target.enrichment, net = NULL, significanceThreshold = 0.05, markers.path = NULL ) {
   if ( typeof(expr.data) == "character" ) {
     expr.data = readRDS(expr.data)
   }
@@ -486,8 +487,8 @@ removePrimaryEffect <- function( expr.data, target.enrichment, net = NULL, marke
     enrichment.by.module = getModulesEnrichment( net = net, markers.path = markers.path)
   }
   enrichment.names = rownames(enrichment.by.module)
-  enrichment.by.module = enrichment.by.module[,][,as.vector(apply(enrichment.by.module[,], 2, FUN = function(x) { sum( x <= 0.05)} ) == 1)]
-  enriched.modules = apply( enrichment.by.module, 2, FUN = function(x) { enrichment.names[which(x <= 0.05)] } )
+  enrichment.by.module = enrichment.by.module[,][,as.vector(apply(enrichment.by.module[,], 2, FUN = function(x) { sum( x <= significanceThreshold)} ) == 1)]
+  enriched.modules = apply( enrichment.by.module, 2, FUN = function(x) { enrichment.names[which(x <= significanceThreshold)] } )
 
   if ( is.null(target.enrichment) | length(target.enrichment) == 0 ) {
     stop( "target.enrichment must be a character list containing one or mor enrichment names" )
@@ -514,6 +515,7 @@ removePrimaryEffect <- function( expr.data, target.enrichment, net = NULL, marke
 #' will be analyzed.
 #' @param primary.net A GCN created with \code{\link{createGCN}}
 #' @param secondary.net A GCN created with \code{\link{createGCN}}
+#' @param significanceThreshold Max enrichment p-value for a module to be considred as significantly enriched.
 #' @param genes The list of gene's IDs to be used
 #' @param markers.path Folder containing user-defined lists of genes to be used as marker genes to determine
 #' modules' enrichment. This is done using WGCNA::userListEnrichment function, so they must be in a compatible
@@ -521,7 +523,7 @@ removePrimaryEffect <- function( expr.data, target.enrichment, net = NULL, marke
 #' @return A data frame showing a row for each gene and the module and enrichment of that gene in both networks.
 #' When the module is not enriched a - is shonw. When is enriched by more than a type, they are shown as a list.
 #' @export
-enrichmentEvolution <- function( primary.net, secondary.net, genes = NULL, markers.path = "." ) {
+enrichmentEvolution <- function( primary.net, secondary.net, significanceThreshold = 0.05, genes = NULL, markers.path = "." ) {
   primary.net.filename = "."
   if ( typeof(primary.net) == "character" ) {
     primary.net.filename = primary.net
@@ -538,16 +540,16 @@ enrichmentEvolution <- function( primary.net, secondary.net, genes = NULL, marke
   # Nos quedamos por un lado con los nombres de las columnas ( tipos de celula )
   primary.enrichment.names = rownames(primary.enrichment.by.module)
   # Nos quedamos sólo con las columnas  que tienen modulos significativa y exclusivamente enriquecidos por un único tipo de célula
-  primary.em = primary.enrichment.by.module[,as.vector(apply(primary.enrichment.by.module, 2, FUN = function(x) { sum( x <= 0.05)} ) == 1), drop = F]
+  primary.em = primary.enrichment.by.module[,as.vector(apply(primary.enrichment.by.module, 2, FUN = function(x) { sum( x <= significanceThreshold)} ) == 1), drop = F]
   # la lista de módulos etiquetada por el tipo de célula en el que están significativa y exclusivamente enriquecidos
-  primary.em = apply( primary.em, 2, FUN = function(x) { primary.enrichment.names[which(x <= 0.05)] } )
+  primary.em = apply( primary.em, 2, FUN = function(x) { primary.enrichment.names[which(x <= significanceThreshold)] } )
 
   # Nos quedamos por un lado con los nombres de las columnas ( tipos de celula )
   secondary.enrichment.names = rownames(secondary.enrichment.by.module)
   # Nos quedamos sólo con las columnas  que tienen modulos significativa y exclusivamente enriquecidos por un único tipo de célula
-  secondary.em = secondary.enrichment.by.module[,as.vector(apply(secondary.enrichment.by.module, 2, FUN = function(x) { sum( x <= 0.05)} ) == 1), drop=F]
+  secondary.em = secondary.enrichment.by.module[,as.vector(apply(secondary.enrichment.by.module, 2, FUN = function(x) { sum( x <= significanceThreshold)} ) == 1), drop=F]
   # la lista de módulos etiquetada por el tipo de célula en el que están significativa y exclusivamente enriquecidos
-  secondary.em = apply( secondary.em, 2, FUN = function(x) { secondary.enrichment.names[which(x <= 0.05)] } )
+  secondary.em = apply( secondary.em, 2, FUN = function(x) { secondary.enrichment.names[which(x <= significanceThreshold)] } )
 
   if ( is.null(genes) ) {
     genes = names(primary.net$moduleColors)
@@ -559,8 +561,8 @@ enrichmentEvolution <- function( primary.net, secondary.net, genes = NULL, marke
                       secondary.enrichment = as.character(secondary.em[secondary.net$moduleColors[genes]]),
                       stringsAsFactors=F,
                       row.names=NULL )
-  tabla$primary.enrichment[is.na(tabla$primary.enrichment)] = unlist(apply(primary.enrichment.by.module[,tabla$primary.module[is.na(tabla$primary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(primary.enrichment.names[which(x <= 0.05)], collapse=", ")) }))
-  tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = unlist(apply(secondary.enrichment.by.module[,tabla$secondary.module[is.na(tabla$secondary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=0.05) == 0) return("-") else return (paste(secondary.enrichment.names[which(x <= 0.05)], collapse=", ")) }))
+  tabla$primary.enrichment[is.na(tabla$primary.enrichment)] = unlist(apply(primary.enrichment.by.module[,tabla$primary.module[is.na(tabla$primary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=significanceThreshold) == 0) return("-") else return (paste(primary.enrichment.names[which(x <= significanceThreshold)], collapse=", ")) }))
+  tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = unlist(apply(secondary.enrichment.by.module[,tabla$secondary.module[is.na(tabla$secondary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=significanceThreshold) == 0) return("-") else return (paste(secondary.enrichment.names[which(x <= significanceThreshold)], collapse=", ")) }))
   tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = "-"
   return(tabla)
 }
