@@ -4,6 +4,8 @@ library(dynamicTreeCut)
 library(stats)
 library(utils)
 
+remove.na = function( x ) { x[!is.na(x)] }
+
 #' Best Coorrelated Module Selection
 #'
 #' The function selects the best module for a gene on the basis of the highest
@@ -555,14 +557,14 @@ enrichmentEvolution <- function( primary.net, secondary.net, significanceThresho
     genes = names(primary.net$moduleColors)
   }
   tabla = data.frame( gene = genes,
-                      primary.module = as.character(primary.net$moduleColors[genes]), 
+                      primary.module = as.character(primary.net$moduleColors[genes]),
                       primary.enrichment = as.character(primary.em[primary.net$moduleColors[genes]]),
-                      secondary.module = as.character(secondary.net$moduleColors[genes]), 
+                      secondary.module = as.character(secondary.net$moduleColors[genes]),
                       secondary.enrichment = as.character(secondary.em[secondary.net$moduleColors[genes]]),
                       stringsAsFactors=F,
                       row.names=NULL )
   tabla$primary.enrichment[is.na(tabla$primary.enrichment)] = unlist(apply(primary.enrichment.by.module[,tabla$primary.module[is.na(tabla$primary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=significanceThreshold) == 0) return("-") else return (paste(primary.enrichment.names[which(x <= significanceThreshold)], collapse=", ")) }))
-  tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = unlist(apply(secondary.enrichment.by.module[,tabla$secondary.module[is.na(tabla$secondary.enrichment)],drop=F ], 2, FUN=function(x) { if (sum(x<=significanceThreshold) == 0) return("-") else return (paste(secondary.enrichment.names[which(x <= significanceThreshold)], collapse=", ")) }))
+  tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = unlist(apply(secondary.enrichment.by.module[,remove.na(tabla$secondary.module[is.na(tabla$secondary.enrichment)]),drop=F ], 2, FUN=function(x) { if (sum(x<=significanceThreshold) == 0) return("-") else return (paste(secondary.enrichment.names[which(x <= significanceThreshold)], collapse=", ")) }))
   tabla$secondary.enrichment[is.na(tabla$secondary.enrichment)] = "-"
   return(tabla)
 }
