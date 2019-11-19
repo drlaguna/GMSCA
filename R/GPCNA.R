@@ -383,13 +383,17 @@ createGCN <- function( expr.data,
 #' modules enrichment. This is done using WGCNA::userListEnrichment function so they must be in a compatible
 #' format. Gene IDs must be expresed using the same format as in the network specified in the first parameter.
 #' @param return.processed When True the functions returns the -log10 of the p-value obtained replacing the -inf
-#' values by the highest value obtained. When False the function returns the p-values.
+#' values by the highest value obtained. When False the function returns the p-values. False by default.
+#' @param significanceThreshold When this value is lower than 1 this function returns the name of the celltype
+#' enrichment of each module which is exclusively enriched by a single celltype with a p-value lower than the
+#' value received by this parameter. In this case, the value of return.processed is ignored.
 #' @return a matrix with a column for each module in the network and a row for each enrichment type. Values in the matrix
 #' reflects the p-value resulting from the test made to determine if the module is enriched or not.
 #' @export
 getModulesEnrichment <- function(net,
                                 markers.path = ".",
-                                return.processed=F){
+                                return.processed=F,
+                                significanceThreshold = 1){
 
   if ( typeof(net) == "character" ) {
     enrichment.filename = paste0( net, ".enrichment.csv")
@@ -436,7 +440,12 @@ getModulesEnrichment <- function(net,
       }
     }
   }
-  if ( return.processed ) {
+  if ( significanceThreshold < 1 ) {
+    enrichment.names = rownames(ctypedata)
+    ctypedata = ctypedata[,][,as.vector(apply(ctypedata[,], 2, FUN = function(x) { sum( x <= significanceThreshold)} ) == 1)]
+    ctypedata = apply( ctypedata, 2, FUN = function(x) { enrichment.names[which(x <= significanceThreshold)] } )	
+  }
+  if ( return.processed && significanceThreshold >= 1 ) {
     ctypedata = ctypedata[,apply(ctypedata,2,function(x){ any(x < 1)}),drop=FALSE]
     ctypedata = -log10(ctypedata)
     ctypedata[is.infinite(ctypedata)] = max(ctypedata[!is.infinite(ctypedata)])
