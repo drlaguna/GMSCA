@@ -402,6 +402,12 @@ getModulesEnrichment <- function(net,
                                  outputCorrectedPvalues = F,
                                  debug = F) {
 
+  my.fisher.test = function( a, b, shared, total ) { 
+    m = matrix(c(shared, b-shared, a-shared, total-a-b+shared), ncol=2,nrow=2)
+    f = fisher.test(m, alternative="greater") 
+    return(f$p.value)
+  }
+
   if ( typeof(net) == "character" ) {
     enrichment.filename = paste0( net, ".enrichment.csv")
     if ( file.exists( enrichment.filename ) ) {
@@ -420,12 +426,12 @@ getModulesEnrichment <- function(net,
   # We remove duplicated and genes not included in the network we are going to analyze to reduce bias
   for ( i in 1:length(markers.set) ) {
     if ( debug ) {
-      print( paste0( "Tipo ", names(markers.set)[i], " con ", length(markers.set[[i]]), " genes"))
+      print( paste0( "Enrichment file", names(markers.set)[i], " contains ", length(markers.set[[i]]), " genes"))
     }
     markers.set[[i]] = unique(markers.set[[i]])
     markers.set[[i]] = markers.set[[i]][is.element(markers.set[[i]], names(net$moduleColors))]
     if ( debug ) {
-      print( paste0( "Después: ", length(markers.set[[i]]), " genes"))
+      print( paste0( "After removing duplicated and genes not included in the network we have: ", length(markers.set[[i]]), " genes"))
     }
   }
   m = NULL
@@ -442,7 +448,7 @@ getModulesEnrichment <- function(net,
       if ( debug ) {
         corrected.p.value = length(modules) * length(markers.set) * ft
         corrected.p.value = min(1, corrected.p.value)
-        print( paste0( "El modulo ", module, " tiene ", size.module, " genes, de los cuales ", size.shared, " coinciden con alguno de los ", size.markers, " marcadores de tipo ", enrichment.name, " con un p-value de ", ft, " corregido: ", corrected.p.value ) )
+        print( paste0( "Module ", module, " has ", size.module, " genes, ", size.shared, " of which are also included in the ", size.markers, " genes from enrichment ", enrichment.name, " p-value: ", ft, " corrected p-value: ", corrected.p.value ) )
       }
       n = c(n, ft)
     }
