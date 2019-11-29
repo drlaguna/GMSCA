@@ -4,7 +4,8 @@
 \alias{getModulesEnrichment}
 \title{Modules enrichment}
 \usage{
-getModulesEnrichment(net, markers.path = ".", return.processed = F)
+getModulesEnrichment(net, markers.path = ".", return.processed = F,
+  significanceThreshold = 1, outputCorrectedPvalues = F, debug = F)
 }
 \arguments{
 \item{net}{A GCN created with \code{\link{createGCN}}. It can be an R object or the full path of a file
@@ -12,16 +13,27 @@ containing it. If a filename is provided this function will first look for a fil
 ending in ".enrichment.csv". If the file exists the function will return its content.}
 
 \item{markers.path}{Folder containing user-defined lists of genes to be used as marker genes to determine
-modules enrichment. This is done using WGCNA::userListEnrichment function so they must be in a compatible
-format. Gene IDs must be expresed using the same format as in the network specified in the first parameter.}
+modules enrichment. They must have in the first row the name of the enrichment and then, a gene ID on every
+row. Gene IDs must be expresed using the same format as in the network specified in the first parameter.}
 
 \item{return.processed}{When True the functions returns the -log10 of the p-value obtained replacing the -inf
-values by the highest value obtained. When False the function returns the p-values.}
+values by the highest value obtained. When False the function returns the p-values. This parameter is False by default.}
+
+\item{significanceThreshold}{When this value is lower than 1 this function returns the name of the celltype
+enrichment of each module which is exclusively enriched by a single celltype with a p-value lower than the
+value received by this parameter. In this case, the value of return.processed is ignored.}
+
+\item{outputCorrectedPvalues}{When true some corrections are made to the standard fisher test obtained. Firstly a Bonferroni
+correction, then a regression correctio to reduce bias of using too big enrichment sets. This paremeter is False by default.}
+
+\item{debug}{Show some messages about the test made}
 }
 \value{
 a matrix with a column for each module in the network and a row for each enrichment type. Values in the matrix
-reflects the p-value resulting from the test made to determine if the module is enriched or not.
+reflects the p-value resulting from the test made to determine if the module is enriched or not. Alternatively, when
+significanceThreshold < 1 a named vector with the enrichment name for each module significantly and exclusivelly
+enriched by a celltype.
 }
 \description{
-This function determine the module enrichment of a GCN using WGCNA::userListEnrichment
+This function determine the module enrichment of a GCN
 }

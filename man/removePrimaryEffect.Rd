@@ -5,7 +5,7 @@
 \title{Cleaning the primary enrichment signal}
 \usage{
 removePrimaryEffect(expr.data, target.enrichment, net = NULL,
-  markers.path = NULL)
+  significanceThreshold = 0.05, markers.path = NULL)
 }
 \arguments{
 \item{expr.data}{The expression data to be cleaned. It can be a full path file name or a data frame with
@@ -18,6 +18,8 @@ names) should be one from the list of enrichment marker genes' files provided.}
 of a file containing it or an R object. This network reflects the primary signal and it is used to determine
 what modules need to be cleaned in order to find the secondary signal. If no network is provided it will
 be created. Therefore, providing one is also a way to reduce the time spent by this function.}
+
+\item{significanceThreshold}{Max enrichment p-value for a module to be considred as significantly enriched.}
 
 \item{markers.path}{Folder containing user-defined lists of genes to be used as marker genes to determine
 modules' enrichment. This is done using WGCNA::userListEnrichment function, so they must be in a compatible

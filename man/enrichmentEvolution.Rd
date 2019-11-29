@@ -4,13 +4,15 @@
 \alias{enrichmentEvolution}
 \title{Resume changes in enrichment for each gene}
 \usage{
-enrichmentEvolution(primary.net, secondary.net, genes = NULL,
-  markers.path = ".")
+enrichmentEvolution(primary.net, secondary.net,
+  significanceThreshold = 0.05, genes = NULL, markers.path = ".")
 }
 \arguments{
 \item{primary.net}{A GCN created with \code{\link{createGCN}}}
 
 \item{secondary.net}{A GCN created with \code{\link{createGCN}}}
+
+\item{significanceThreshold}{Max enrichment p-value for a module to be considred as significantly enriched.}
 
 \item{genes}{The list of gene's IDs to be used}
 

@@ -375,25 +375,32 @@ createGCN <- function( expr.data,
 
 #' Modules enrichment
 #'
-#' This function determine the module enrichment of a GCN using WGCNA::userListEnrichment
+#' This function determine the module enrichment of a GCN
 #' @param net A GCN created with \code{\link{createGCN}}. It can be an R object or the full path of a file
 #' containing it. If a filename is provided this function will first look for a file with the same name but
 #' ending in ".enrichment.csv". If the file exists the function will return its content.
 #' @param markers.path Folder containing user-defined lists of genes to be used as marker genes to determine
-#' modules enrichment. This is done using WGCNA::userListEnrichment function so they must be in a compatible
-#' format. Gene IDs must be expresed using the same format as in the network specified in the first parameter.
+#' modules enrichment. They must have in the first row the name of the enrichment and then, a gene ID on every
+#' row. Gene IDs must be expresed using the same format as in the network specified in the first parameter.
 #' @param return.processed When True the functions returns the -log10 of the p-value obtained replacing the -inf
-#' values by the highest value obtained. When False the function returns the p-values. False by default.
+#' values by the highest value obtained. When False the function returns the p-values. This parameter is False by default.
 #' @param significanceThreshold When this value is lower than 1 this function returns the name of the celltype
 #' enrichment of each module which is exclusively enriched by a single celltype with a p-value lower than the
 #' value received by this parameter. In this case, the value of return.processed is ignored.
+#' @param outputCorrectedPvalues When true some corrections are made to the standard fisher test obtained. Firstly a Bonferroni
+#' correction, then a regression correctio to reduce bias of using too big enrichment sets. This paremeter is False by default.
+#' @param debug Show some messages about the test made
 #' @return a matrix with a column for each module in the network and a row for each enrichment type. Values in the matrix
-#' reflects the p-value resulting from the test made to determine if the module is enriched or not.
+#' reflects the p-value resulting from the test made to determine if the module is enriched or not. Alternatively, when
+#' significanceThreshold < 1 a named vector with the enrichment name for each module significantly and exclusivelly
+#' enriched by a celltype.
 #' @export
 getModulesEnrichment <- function(net,
-                                markers.path = ".",
-                                return.processed=F,
-                                significanceThreshold = 1){
+                                 markers.path = ".",
+                                 return.processed=F,
+                                 significanceThreshold = 1,
+                                 outputCorrectedPvalues = F,
+                                 debug = F) {
 
   if ( typeof(net) == "character" ) {
     enrichment.filename = paste0( net, ".enrichment.csv")
@@ -407,51 +414,82 @@ getModulesEnrichment <- function(net,
     }
     net = readRDS(net)
   }
+
   modules = unique(net$moduleColors)
-
-  files = list.files(path=markers.path,full.names = T)
-  files = files[grep(pattern=".txt$",files)]
-  markernames = gsub(".txt","",basename(files))
-  if ( length(markernames) == 0 ) {
-    stop( paste0( "There are no txt files to be used as marker genes in path ", markers.path) )
-  }
-
-  ctypes = markernames
-  ctypedata = matrix(ncol=length(modules),nrow=length(files))
-  ctypedata[,] = 1
-  rownames(ctypedata) = ctypes
-  colnames(ctypedata) = modules
-
-  all.gene.names = names(net$moduleColors)
-
-  tmp.enr.f = tempfile()
-  en = userListEnrichment( all.gene.names, net$moduleColors, files, nameOut = tmp.enr.f)
-  if(file.exists(tmp.enr.f)){
-    enrichment = read.csv(tmp.enr.f, stringsAsFactors=F)
-    file.remove(tmp.enr.f)
-    for(i in 1:nrow(enrichment)){
-      module = enrichment$InputCategories[i]
-      for(j in 1:length(files)){
-        if(grepl(ctypes[j],enrichment$UserDefinedCategories[i])) {
-          category = ctypes[j]
-          ctypedata[category,module] = enrichment$CorrectedPvalues[i]
-          break
-        }
-      }
+  markers.set = getMarkerGenes( markers.path )
+  # We remove duplicated and genes not included in the network we are going to analyze to reduce bias
+  for ( i in 1:length(markers.set) ) {
+    if ( debug ) {
+      print( paste0( "Tipo ", names(markers.set)[i], " con ", length(markers.set[[i]]), " genes"))
+    }
+    markers.set[[i]] = unique(markers.set[[i]])
+    markers.set[[i]] = markers.set[[i]][is.element(markers.set[[i]], names(net$moduleColors))]
+    if ( debug ) {
+      print( paste0( "Después: ", length(markers.set[[i]]), " genes"))
     }
   }
+  m = NULL
+  for ( module in modules ) {
+    genes.module = names(net$moduleColors[net$moduleColors == module] )
+    n = NULL
+    for ( enrichment.name in names(markers.set) ) {
+      markers = markers.set[[enrichment.name]]
+      shared = intersect( genes.module, markers )
+      size.module = table(net$moduleColors)[module]
+      size.markers = length(markers)
+      size.shared = length(shared)
+      ft = my.fisher.test( size.module, size.markers, size.shared, length(net$moduleColors) )
+      if ( debug ) {
+        corrected.p.value = length(modules) * length(markers.set) * ft
+        corrected.p.value = min(1, corrected.p.value)
+        print( paste0( "El modulo ", module, " tiene ", size.module, " genes, de los cuales ", size.shared, " coinciden con alguno de los ", size.markers, " marcadores de tipo ", enrichment.name, " con un p-value de ", ft, " corregido: ", corrected.p.value ) )
+      }
+      n = c(n, ft)
+    }
+    m = cbind(m,n)
+  }
+
+  # Change 0 by minimum possible value in R
+  m = apply(m, c(1,2), FUN=function(x) {max(.Machine$double.xmin, x)})
+
+  if ( outputCorrectedPvalues ) {
+    # Bonferroni correction
+    m = matrix(p.adjust( m,  method = "bonferroni", n = length(modules) * length(markers.set) ), nrow = length(markers.set))
+    #m = m * length( modules ) * length( markers.set )
+    #m = apply(m, c(1,2), FUN=function(x) {min(1,x)})
+
+    # Regresion correction
+    x = unlist(lapply( markers.set, length))
+    names(x) = names(markers.set)
+    y = apply( m, 1, FUN = function(x) {sum(-log10(x))/length(x) } )
+    mylm = lm( y ~ x )
+    base = predict( mylm, data.frame(x=unlist(lapply( markers.set, length))))
+    m = ( 10^-(-log10(m) - base) )
+
+    # Filter out too big values
+    m = ifelse( m >= 1, 1, m)
+  }
+
+  rownames(m) = names(markers.set)
+  colnames(m) = modules
+
+  # Filter out non significantley and exclusively enriched modules
   if ( significanceThreshold < 1 ) {
-    enrichment.names = rownames(ctypedata)
-    ctypedata = ctypedata[,][,as.vector(apply(ctypedata[,], 2, FUN = function(x) { sum( x <= significanceThreshold)} ) == 1)]
-    ctypedata = apply( ctypedata, 2, FUN = function(x) { enrichment.names[which(x <= significanceThreshold)] } )	
+    if ( outputCorrectedPvalues ) {
+      # significanceThreshold = significanceThreshold / ncol(m) * length(markers.set)
+    }
+    m = m[, as.vector(apply( m, 2, FUN = function(x) { sum( x < significanceThreshold ) == 1  } ) ), drop=F]
+    return ( apply( m, 2, FUN = function(x) { rownames(m)[which(x <= significanceThreshold)] } )	)
   }
-  if ( return.processed && significanceThreshold >= 1 ) {
-    ctypedata = ctypedata[,apply(ctypedata,2,function(x){ any(x < 1)}),drop=FALSE]
-    ctypedata = -log10(ctypedata)
-    ctypedata[is.infinite(ctypedata)] = max(ctypedata[!is.infinite(ctypedata)])
-    ctypedata = ctypedata[order(rownames(ctypedata)),,drop=FALSE]
+
+  # Process values transforming them in the range 0..Max
+  if ( return.processed ) {
+    m = -log10(m)
+    if ( sum( is.infinite( m ) ) > 0 ) {
+      m[ is.infinite( m ) ] = max( m[ !is.infinite( m ) ] )
+    }
   }
-  return (ctypedata)
+  return( m )
 }
 
 #' Cleaning the primary enrichment signal
@@ -486,20 +524,8 @@ removePrimaryEffect <- function( expr.data, target.enrichment, net = NULL, signi
       net = readRDS( net.filename )
     }
   }
-  enrichment.filename = paste0( net.filename, ".enrichment.csv")
-  if ( file.exists( enrichment.filename ) ) {
-    enrichment.by.module = read.csv( enrichment.filename, stringsAsFactors=F)
-    if ( colnames(enrichment.by.module)[1] == "X" ) {
-      rownames(enrichment.by.module) = enrichment.by.module[,1]
-      enrichment.by.module = enrichment.by.module[,-1]
-    }
-  } else {
-    if ( is.null( markers.path ) ) markers.path = dirname( net.filename )
-    enrichment.by.module = getModulesEnrichment( net = net, markers.path = markers.path)
-  }
-  enrichment.names = rownames(enrichment.by.module)
-  enrichment.by.module = enrichment.by.module[,][,as.vector(apply(enrichment.by.module[,], 2, FUN = function(x) { sum( x <= significanceThreshold)} ) == 1)]
-  enriched.modules = apply( enrichment.by.module, 2, FUN = function(x) { enrichment.names[which(x <= significanceThreshold)] } )
+
+  enriched.modules = getModulesEnrichment( net = net, markers.path = markers.path, significanceThreshold = significanceThreshold )
 
   if ( is.null(target.enrichment) | length(target.enrichment) == 0 ) {
     stop( "target.enrichment must be a character list containing one or mor enrichment names" )
@@ -545,22 +571,9 @@ enrichmentEvolution <- function( primary.net, secondary.net, significanceThresho
     secondary.net.filename = secondary.net
     secondary.net = readRDS(secondary.net)
   }
-  primary.enrichment.by.module = getModulesEnrichment( net = primary.net, markers.path = markers.path)
-  secondary.enrichment.by.module = getModulesEnrichment( net = secondary.net, markers.path = markers.path)
 
-  # Nos quedamos por un lado con los nombres de las columnas ( tipos de celula )
-  primary.enrichment.names = rownames(primary.enrichment.by.module)
-  # Nos quedamos sólo con las columnas  que tienen modulos significativa y exclusivamente enriquecidos por un único tipo de célula
-  primary.em = primary.enrichment.by.module[,as.vector(apply(primary.enrichment.by.module, 2, FUN = function(x) { sum( x <= significanceThreshold)} ) == 1), drop = F]
-  # la lista de módulos etiquetada por el tipo de célula en el que están significativa y exclusivamente enriquecidos
-  primary.em = apply( primary.em, 2, FUN = function(x) { primary.enrichment.names[which(x <= significanceThreshold)] } )
-
-  # Nos quedamos por un lado con los nombres de las columnas ( tipos de celula )
-  secondary.enrichment.names = rownames(secondary.enrichment.by.module)
-  # Nos quedamos sólo con las columnas  que tienen modulos significativa y exclusivamente enriquecidos por un único tipo de célula
-  secondary.em = secondary.enrichment.by.module[,as.vector(apply(secondary.enrichment.by.module, 2, FUN = function(x) { sum( x <= significanceThreshold)} ) == 1), drop=F]
-  # la lista de módulos etiquetada por el tipo de célula en el que están significativa y exclusivamente enriquecidos
-  secondary.em = apply( secondary.em, 2, FUN = function(x) { secondary.enrichment.names[which(x <= significanceThreshold)] } )
+  primary.em = getModulesEnrichment( net = primary.net, markers.path = markers.path, significanceThreshold = significanceThreshold )
+  secondary.em = getModulesEnrichment( net = secondary.net, markers.path = markers.path, significanceThreshold = significanceThreshold )
 
   if ( is.null(genes) ) {
     genes = names(primary.net$moduleColors)
