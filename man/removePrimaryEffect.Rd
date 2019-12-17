@@ -5,7 +5,8 @@
 \title{Cleaning the primary enrichment signal}
 \usage{
 removePrimaryEffect(expr.data, target.enrichment, net = NULL,
-  significanceThreshold = 0.05, markers.path = NULL)
+  significanceThreshold = 0.05, modules.to.clean = NULL,
+  markers.path = NULL)
 }
 \arguments{
 \item{expr.data}{The expression data to be cleaned. It can be a full path file name or a data frame with
@@ -21,13 +22,16 @@ be created. Therefore, providing one is also a way to reduce the time spent by t
 
 \item{significanceThreshold}{Max enrichment p-value for a module to be considred as significantly enriched.}
 
+\item{modules.to.clean}{List of modules to be filtered out. This parameter is NULL by default, when a list of 
+module names is provided the significanceThreshold parameter is ignored.}
+
 \item{markers.path}{Folder containing user-defined lists of genes to be used as marker genes to determine
 modules' enrichment. This is done using WGCNA::userListEnrichment function, so they must be in a compatible
 format. Gene IDs must be expresed using the same format as in the expression data specified in the first parameter.}
 }
 \value{
 the expression data filtered that, hopefully, show the secondary role of some genes in the same format
-of the input expression data.
+of the input expression data. The function returns NULL when no data has been filtered out.
 }
 \description{
 This function generates a new expression profile by removing the primary signal of the groups of genes whose only and primary

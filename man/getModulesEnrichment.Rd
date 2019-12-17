@@ -5,7 +5,7 @@
 \title{Modules enrichment}
 \usage{
 getModulesEnrichment(net, markers.path = ".", return.processed = F,
-  significanceThreshold = 1, outputCorrectedPvalues = F, debug = F)
+  significanceThreshold = 1, outputCorrectedPvalues = T, debug = F)
 }
 \arguments{
 \item{net}{A GCN created with \code{\link{createGCN}}. It can be an R object or the full path of a file
@@ -24,7 +24,7 @@ enrichment of each module which is exclusively enriched by a single celltype wit
 value received by this parameter. In this case, the value of return.processed is ignored.}
 
 \item{outputCorrectedPvalues}{When true some corrections are made to the standard fisher test obtained. Firstly a Bonferroni
-correction, then a regression correctio to reduce bias of using too big enrichment sets. This paremeter is False by default.}
+correction, then a regression correctio to reduce bias of using too big enrichment sets. This paremeter is True by default.}
 
 \item{debug}{Show some messages about the test made}
 }
