@@ -3,7 +3,7 @@ library(flashClust)
 library(dynamicTreeCut)
 library(stats)
 library(utils)
-
+ 
 #' Best Coorrelated Module Selection
 #'
 #' The function selects the best module for a gene on the basis of the highest
