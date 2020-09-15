@@ -1,6 +1,6 @@
-# GPCNA: Gene Pleiotropy Co-expression Networks Analysis
+# GMSCA: Gene Multifunctionality in Secondary Co-expression Analysis
 
-If we assume that genes are pleiotropic they can be involved in different biological processes, molecular functions, cell types, etc. Gene Co-expression Networks (GCN) are powerfull tools that allows us to understand the relationships and interactions between genes at transcription level. Using lists of genes well known for being cell-type markers or related to a biological process, we can annotate the modules (groups of genes) forming the GCN. The annotation process determines the enrichment of each module and the primary role of the genes included in it.
+We assume that genes can be involved in different biological processes, molecular functions, cell types, etc. Gene Co-expression Networks (GCN) are powerfull tools that allows us to understand the relationships and interactions between genes at transcription level. Using lists of genes well known for being cell-type markers or related to a biological process, we can annotate the modules (groups of genes) forming the GCN. The annotation process determines the enrichment of each module and the primary role of the genes included in it.
 
 This R package includes functions to create GCN, annotate its modules, and to remove the effect of the principal enrichment of modules. This last function is the main contribution of the package and help us create a new expression profile in which it is possible to analyze secondary roles of genes.
 
