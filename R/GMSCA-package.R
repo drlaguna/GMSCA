@@ -1,8 +1,8 @@
-#' GPCNA
+#' GMSCA
 #'
 #' Package description.
 #'
 #' @docType package
-#' @name GPCNA
+#' @name GMSCA
 #' @import WGCNA flashClust dynamicTreeCut stats utils
 NULL
