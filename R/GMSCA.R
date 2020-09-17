@@ -473,9 +473,9 @@ aggModEnrichmentConf = function( enrichment.by.module,
   return(signals)
 }
 
-#' Title Generate a pleiotropy catalog from a gene expression profiling
+#' Title Generate a function catalog from a gene expression profiling
 #'
-#' This is the main method of GPCNA. It needs a gene expression matrix, and markers to test for enrichment
+#' This is the main method of GMSCA It needs a gene expression matrix, and markers to test for enrichment
 #' of the modules. Gene names are expected to be at column names in the matrix. Markers and gene names 
 #' must be in the same naming space.
 #' 
@@ -483,7 +483,7 @@ aggModEnrichmentConf = function( enrichment.by.module,
 #' 
 #' @param expr.data Gene expression profile, genes at columns, samples at rows. Column names are used as 
 #' gene names
-#' @param job.path GPCNA generates a primary network and as many secondary networks (and expression
+#' @param job.path GMSCA generates a primary network and as many secondary networks (and expression
 #' matrices) as cell types considered. Everything is stored in this folder
 #' @param significanceThreshold 0.05 by default, it is the final p-value threshold to consider a module enriched
 #' for gene markers
