@@ -98,4 +98,4 @@ We can see the 26 genes that have been found to have "C" as secondary cell-type.
 
 ## Authors
 
-This R package uses code from https://github.com/juanbot/km2gcn and has been developed in collaboration with Juan A. Botía, Regina Reynolds and Mina Ryten.
+This R package uses code from https://github.com/juanbot/CoExpNets and has been developed in collaboration with Juan A. Botía and Mina Ryten.
