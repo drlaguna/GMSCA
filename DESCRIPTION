@@ -1,5 +1,5 @@
-Package: GPCNA
-Title: Gene Pleiotropy Co-expression Networks Analysis
+Package: GMSCA
+Title: Gene Multifunctionality in Secondary Co-expression Analysis
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Juan A.",
